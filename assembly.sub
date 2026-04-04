@@ -1,0 +1,25 @@
+# Container for hifiasm genome assembler
+container_image = osdf:///osg-public/containers/hifiasm.sif
+
+executable = scripts/assembly.sh
+arguments = Omalun-Tater
+
+log = ./logs/assembly.log
+output = assembly_$(Cluster)_$(Process).out
+error  = assembly_$(Cluster)_$(Process).err
+
+# ONT reads pre-staged on OSDF
+transfer_input_files = osdf:///osg-public/data/tutorial-CHTC-Genome-Assembly/input/SRR22085263
+
+# Transfer assembly output back to the submit node
+transfer_output_files = assembly_output.tar.gz
+transfer_output_remaps = "assembly_output.tar.gz=Assembly_Output/assembly_output.tar.gz"
+
+Requirements = (Target.HasCHTCStaging == true)
+
+# hifiasm for a ~2.4 Gb mammalian genome needs substantial resources
+request_memory = 128GB
+request_disk = 500GB
+request_cpus = 16
+
+queue 1
