@@ -53,7 +53,7 @@ You will need the following before moving forward with the tutorial:
 3. [X] Basic familiarity with HTCondor job submission. If you are new to HTCondor, complete the CHTC ["Roadmap to getting started"](https://chtc.cs.wisc.edu/uw-research-computing/htc-roadmap/) and read the ["Practice: Submit HTC Jobs using HTCondor"](https://chtc.cs.wisc.edu/uw-research-computing/htcondor-job-submission).
 4. [X] Basic familiarity with genome assembly workflows.
 
-> [!DANGER]
+> [!CAUTION]
 > Genome assembly is a resource-intensive process that can easily fail if you do not have sufficient disk space. Make sure you have a staging folder with at least 500 GB of available disk space before proceeding with this tutorial. If you need to request additional disk space, please request it via our [Quota Increase Form](https://chtc.cs.wisc.edu/uw-research-computing/quota-request).
 
 This tutorial also assumes that you:
