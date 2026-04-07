@@ -4,9 +4,9 @@
 
 A genome assembly workflow for Oxford Nanopore long reads using hifiasm on CHTC's high-throughput computing infrastructure.
 
-[hifiasm](https://github.com/chhylp123/hifiasm) is a fast, haplotype-resolved de novo assembler originally designed for PacBio HiFi reads. Starting with version 0.19, hifiasm also supports **ONT-only assembly**, making it a versatile choice for long-read genome projects. In ONT-only mode, hifiasm takes raw Oxford Nanopore reads and produces haplotype-resolved assemblies with high contiguity.
+For this tutorial we will be using [hifiasm](https://github.com/chhylp123/hifiasm), a fast and simple haplotype-resolved de novo assembler; however, it should be noted that the concepts learned in this tutorial can be applied to most other genome assembly programs.
 
-This tutorial walks you through assembling the genome of the **Palla's Cat** (*Otocolobus manul*), a small wild cat native to the grasslands and montane steppes of Central Asia. The sequencing data comes from a specimen named **Tater**, sequenced using Oxford Nanopore's **Ligation Sequencing Kit**. The expected genome size is approximately **2.4 Gb**, comparable to the domestic cat (*Felis catus*).
+This tutorial walks you through assembling the genome of the **Palla's Cat** (*Otocolobus manul*), a small wild cat native to the grasslands and montane steppes of Central Asia. The sequencing data comes from a Palla's Cat named **Tater**, sequenced using Oxford Nanopore's **Ligation Sequencing Kit** by the University of Minnesota. The expected genome size is approximately **2.4 Gb**, comparable to the domestic cat (*Felis catus*).
 
 This tutorial teaches you how to run a genome assembly on CHTC using hifiasm and scalable, high-throughput compute practices. You will learn how to:
 
@@ -47,8 +47,9 @@ All steps run using the HTCondor workload manager and Apptainer containers. The 
 You will need the following before moving forward with the tutorial:
 
 1. [X] A CHTC HTC account. If you do not have one, request access at the [CHTC Account Request Page](https://chtc.cs.wisc.edu/uw-research-computing/form.html).
-1. [X] A CHTC "staging" folder.
-2. [X] Basic familiarity with HTCondor job submission. If you are new to HTCondor, complete the CHTC ["Roadmap to getting started"](https://chtc.cs.wisc.edu/uw-research-computing/htc-roadmap/) and read the ["Practice: Submit HTC Jobs using HTCondor"](https://chtc.cs.wisc.edu/uw-research-computing/htcondor-job-submission).
+2. [X] A CHTC "staging" folder with at least 200 GB of available disk space. If you do not have a staging folder, request one by contacting the [CHTC Research Computing Facilitator Team](mailto:chtc@cs.wisc.edu)
+3. [X] Basic familiarity with HTCondor job submission. If you are new to HTCondor, complete the CHTC ["Roadmap to getting started"](https://chtc.cs.wisc.edu/uw-research-computing/htc-roadmap/) and read the ["Practice: Submit HTC Jobs using HTCondor"](https://chtc.cs.wisc.edu/uw-research-computing/htcondor-job-submission).
+4. [X] Basic familiarity with genome assembly workflows.
 
 This tutorial also assumes that you:
 
@@ -77,15 +78,9 @@ Estimated time: plan ~1-2 hours for the tutorial walkthrough. The assembly step 
     cd tutorial-CHTC-Genome-Assembly/
     ```
 
-3. Create a logs directory for HTCondor log files:
-
-    ```bash
-    mkdir -p logs/
-    ```
-
 #### About the Dataset
 
-This tutorial uses Oxford Nanopore Ligation Sequencing reads from the Palla's Cat (*Otocolobus manul*). The sample was taken from **Tater**, a Palla's Cat living in Utica Zoo in New York, and sequences by the University of Minnesota's Faulk Lab. Learn more about how Tater made history as the first Palla's Cat to have their genome sequence [here](https://twin-cities.umn.edu/news-events/u-m-researchers-map-genome-worlds-grumpiest-cat). The reads have been pre-staged on the Open Science Data Federation (OSDF) for use with this tutorial:
+This tutorial uses Oxford Nanopore Ligation Sequencing reads from the Palla's Cat (*Otocolobus manul*). The sample was taken from **Tater**, a Palla's Cat living in Utica Zoo in New York, and sequences by the [University of Minnesota's Faulk Lab](). Learn more about how Tater made history as the first Palla's Cat to have their genome sequence [here](https://twin-cities.umn.edu/news-events/u-m-researchers-map-genome-worlds-grumpiest-cat). The reads have been pre-staged on the Open Science Data Federation (OSDF) for use with this tutorial:
 
 ```
 osdf:///osg-public/data/tutorial-CHTC-Genome-Assembly/input/SRR22085263
@@ -107,15 +102,24 @@ You can also download directly from the SRA public bucket:
 pelican object get osdf:///aws-opendata/us-east-1/sra-pub-run-odp/sra/SRR22085263/SRR22085263 ./
 ```
 
+You can also use the SRA Toolkit to download the reads directly from NCBI:
+
+```bash
+
+# Install SRA Toolkit if you don't have it already
+# Download the reads using fasterq-dump
+fasterq-dump SRR22085263 -O ./
+```
+
 For more details about the dataset, see `Toy_Dataset/README.md`.
 
-| Property | Value |
-|----------|-------|
-| Species | *Otocolobus manul* (Palla's Cat) |
-| Specimen | Tater |
-| Sequencing Platform | Oxford Nanopore Technologies |
-| Library Prep | Ligation Sequencing Kit |
-| Expected Genome Size | ~2.4 Gb |
+| Property             | Value                            |
+|----------------------|----------------------------------|
+| Species              | *Otocolobus manul* (Palla's Cat) |
+| Specimen             | Tater                            |
+| Sequencing Platform  | Oxford Nanopore Technologies     |
+| Library Prep         | Ligation Sequencing Kit          |
+| Expected Genome Size | ~2.4 Gb                          |
 
 
 ## Understanding the Genome Assembly Workflow
@@ -167,24 +171,24 @@ If you need a specific version of hifiasm or want to customize the container, yo
     From: condaforge/miniforge3:latest
 
     %post
-        mamba install hifiasm
+        mamba install -c conda-forge -c bioconda hifiasm
     ```
 
 2. Create a `build.sub` submit file in your directory:
 
     ```bash
     # apptainer.sub
-
+    
     # Include other files that need to be transferred here.
     transfer_input_files = hifiasm.def
-
+    
     +IsBuildJob = True
     
     # Make sure you request enough disk for the container image to build
     request_cpus = 8
     request_memory = 16GB
     request_disk = 30GB      
-
+    
     queue
     ```
 
@@ -204,6 +208,12 @@ If you need a specific version of hifiasm or want to customize the container, yo
 
     ```bash
     mv hifiasm_08APR2026_v1.sif /staging/<netid>/
+    ```
+   
+6. Exit the interactive session and return to your normal bash shell
+
+    ```bash
+    exit
     ```
 </details>
 

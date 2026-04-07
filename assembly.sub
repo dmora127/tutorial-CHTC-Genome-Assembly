@@ -2,7 +2,7 @@
 container_image = osdf:///osg-public/containers/hifiasm.sif
 
 executable = scripts/assembly.sh
-arguments = Omalun-Tater
+arguments = Tater
 
 log = ./logs/assembly.log
 output = assembly_$(Cluster)_$(Process).out

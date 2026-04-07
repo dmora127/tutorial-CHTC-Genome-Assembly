@@ -1,0 +1,13 @@
+# apptainer.sub
+
+# Include other files that need to be transferred here.
+transfer_input_files = hifiasm.def
+
++IsBuildJob = True
+
+# Make sure you request enough disk for the container image to build
+request_cpus = 8
+request_memory = 16GB
+request_disk = 30GB
+
+queue
