@@ -98,7 +98,7 @@ The ONT reads are transferred directly to the execute node by HTCondor as part o
 If you would like to download the reads locally for inspection or other purposes, you can use the Pelican client:
 
 ```bash
-pelican object get osdf:///osg-public/data/tutorial-CHTC-Genome-Assembly/input/SRR22085263 ./
+pelican object get osdf:///osg-public/data/tutorial-CHTC-Genome-Assembly/SRR22085263.fastq ./
 ```
 
 You can also download directly from the SRA public bucket:
@@ -220,18 +220,17 @@ If you need a specific version of hifiasm or want to customize the container, yo
 
 ### Preparing Your ONT Reads
 
-The ONT reads for Tater are pre-staged on OSDF and will be automatically transferred to the execute node by HTCondor. The submit file configures this with:
+The ONT reads for Tater should be pre-staged under **your** `/staging/<NetID>/tutorial-CHTC-Genome-Assembly/SRR22085263.fastq` path. If it is not there, you can download the reads from our public
+data repository using the following command:
 
 ```
-transfer_input_files = osdf:///osg-public/data/tutorial-CHTC-Genome-Assembly/input/SRR22085263.fastq.gz
+pelican object get osdf:///osg-public/data/tutorial-CHTC-Genome-Assembly/SRR22085263.fastq /staging/<NetID>/tutorial-CHTC-Genome-Assembly/SRR22085263.fastq
 ```
 
-> [!IMPORTANT]
-> When running your own assemblies, replace this OSDF path with the path to your own reads. If your reads are stored in your CHTC `/staging/` directory, you can reference them as:
-> ```
-> transfer_input_files = osdf:///chtc/staging/<netid>/my_reads.fastq.gz
-> ```
-> You can also transfer your reads to the job from ResearchDrive via the CHTC-ResearchDrive integration using the UWDF. Learn more about this option on CHTC's [ResearchDrive documentation](https://chtc.cs.wisc.edu/uw-research-computing/htc-uwdf-researchdrive).
+> [!NOTE]
+> You may be asked to create a "Pelican password" for your transfer. This is usually a one-time password you create similar to your SSH Key passphrase. Create a short but secure passphrase you'll remember.
+> You will also likely be pointed to visit a URL to authenticate. Copy the URL to your browser, sign-in with your University of Wisconsin-Madison NetID, and click approve.
+> *Note:* The download is about 300 GB and can take ~1 hour. Please be patient with it. 
 
 #### Compressing Your Reads
 Hifiasm can accept compressed FASTQ files directly, so there is no need to decompress your reads before running the assembly. We highly recommend compressing your reads with gzip or another compression tool to reduce storage and transfer times. If your reads are not compressed, you can compress them with:
@@ -265,7 +264,7 @@ This will reduce the disk requirement for your reads by ~4-5x, which can signifi
     OUTPUT_PREFIX=$1
     
     # Run hifiasm ONT-only assembly
-    hifiasm -t${PYTHON_CPU_COUNT} --ont -o ${OUTPUT_PREFIX}.asm SRR22085263.fastq.gz
+    hifiasm -t${PYTHON_CPU_COUNT} --ont -o ${OUTPUT_PREFIX}.asm /staging/<NetID>/tutorial-CHTC-Genome-Assembly/SRR22085263.fastq
     
     # Cleanup input FASTQ to save disk space
     rm SRR22085263.fastq.gz
@@ -294,7 +293,8 @@ This will reduce the disk requirement for your reads by ~4-5x, which can signifi
     error  = assembly_$(Cluster)_$(Process).err
 
     # ONT reads pre-staged on OSDF
-    transfer_input_files = osdf:///osg-public/data/tutorial-CHTC-Genome-Assembly/input/SRR22085263.fastq.gz
+    # You should generally read data directly in from staging for assemblies due to their large input file sizes
+    #transfer_input_files = osdf:///osg-public/data/tutorial-CHTC-Genome-Assembly/input/SRR22085263.fastq.gz
 
     # Transfer assembly output back to the submit node
     transfer_output_files = assembly_output.tar.gz
